@@ -66,11 +66,8 @@
 	
 	<script>
         var loc = window.location.href
-        console.log(loc);
         if (loc.indexOf("#") != -1 &&  loc.indexOf("#!") == -1 ){
-        	var newLoc = loc.replace("#", "#!?");
-        	console.log(newLoc);
-            window.location.href = newLoc;
+            window.location.href = loc.replace("#", "#!");
         }
     </script>
 	<script src="js/jquery-2.0.2.js"></script>

@@ -102,15 +102,29 @@ angular.module('exampleApp', ['ngRoute', 'ngCookies', 'exampleApp.services'])
 		
 		 /* Try getting valid user from cookie or go to login page */
 		var originalPath = $location.path();
-		console.log("Path: " + originalPath);
+		console.log("Path: ");
+		console.log(originalPath);
+		console.log($location.search());
+		console.log($location.search().access_token);
+		console.log($location.hash());
+		console.log($location);
+		var absUrl = $location.absUrl();
+		console.log(absUrl);
 		$location.path("/welcome");
-		var authToken = $cookieStore.get('authToken');
+		var authToken = $location.search().access_token;
 		if (authToken !== undefined) {
 			$rootScope.authToken = authToken;
-			UserService.get(function(user) {
-				$rootScope.user = user;
-				$location.path(originalPath);
-			});
+			$location.path("/");
+			$rootScope.user = "test";
+		} else {
+			authToken = $cookieStore.get('authToken');
+			if (authToken !== undefined) {
+				$rootScope.authToken = authToken;
+				UserService.get(function(user) {
+					$rootScope.user = user;
+					$location.path(originalPath);
+				});
+			}
 		}
 		
 		$rootScope.initialized = true;
