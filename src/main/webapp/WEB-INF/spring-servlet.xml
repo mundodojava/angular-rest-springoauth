@@ -7,7 +7,7 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
-		http://www.springframework.org/schema/security/oauth2 http://www.springframework.org/schema/security/spring-security-oauth2.xsd
+		http://www.springframework.org/schema/security/oauth2 http://www.springframework.org/schema/security/spring-security-oauth2.xsd 
 		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 	
 	<!-- MVC Config -->
@@ -17,18 +17,6 @@
 	<mvc:default-servlet-handler />
 	
 	<!-- /MVC Config -->
-
-	
-	<!-- Security Config -->
-	
-	<security:http pattern="/photos/**" create-session="stateless"
-		entry-point-ref="oauthAuthenticationEntryPoint"
-		access-decision-manager-ref="accessDecisionManager">
-		<security:anonymous enabled="false" />
-		<security:custom-filter ref="resourceServerFilter" before="PRE_AUTH_FILTER" />
-		<security:intercept-url pattern="/photos/**" access="ROLE_USER,SCOPE_READ" />
-		<security:access-denied-handler ref="oauthAccessDeniedHandler" />
-	</security:http>
 	
 	<bean id="oauthAuthenticationEntryPoint"
 		class="org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint">
@@ -47,6 +35,18 @@
 	
 	<bean id="oauthAccessDeniedHandler"
 		class="org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler" />
+		
+	<!-- Security Config -->
+	
+	<security:http pattern="/protected/**" create-session="stateless"
+		entry-point-ref="oauthAuthenticationEntryPoint"
+		access-decision-manager-ref="accessDecisionManager">
+		<security:anonymous enabled="false" />
+		<security:custom-filter ref="resourceServerFilter" before="PRE_AUTH_FILTER" />
+		<security:intercept-url pattern="/photos/**" access="ROLE_USER,SCOPE_READ" />
+		<security:intercept-url pattern="/protected/partials/**" access="ROLE_USER,SCOPE_READ" />
+		<security:access-denied-handler ref="oauthAccessDeniedHandler" />
+	</security:http>
 	
 	<security:http pattern="/oauth/token" create-session="stateless"
 		authentication-manager-ref="clientAuthenticationManager">
@@ -54,6 +54,19 @@
 		<security:intercept-url pattern="/oauth/token" access="ROLE_CLIENT" />
 		<security:http-basic entry-point-ref="clientAuthenticationEntryPoint" />
 		<security:access-denied-handler ref="oauthAccessDeniedHandler" />
+	</security:http>
+	
+	<!-- Security Login -->
+		
+	<security:http access-denied-page="/login.jsp?authorization_error=true"
+		disable-url-rewriting="true">
+		<security:intercept-url pattern="/oauth/**" access="ROLE_USER" />
+		<security:intercept-url pattern="/**" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+		<security:form-login login-page="/login.html"
+			login-processing-url="/login.do"
+			authentication-failure-url="/login.html"  />
+		<security:logout logout-url="/logout.do" />
+		<security:anonymous />
 	</security:http>
 	
 	<security:authentication-manager id="clientAuthenticationManager">
@@ -70,17 +83,6 @@
 		<property name="realmName" value="sparklr2/client" />
 		<property name="typeName" value="Basic" />
 	</bean>
-	
-	<security:http access-denied-page="/login.jsp?authorization_error=true"
-		disable-url-rewriting="true">
-		<security:intercept-url pattern="/oauth/**" access="ROLE_USER" />
-		<security:intercept-url pattern="/**" access="IS_AUTHENTICATED_ANONYMOUSLY" />
-		<security:form-login login-page="/login.html"
-			login-processing-url="/login.do"
-			authentication-failure-url="/login.html"  />
-		<security:logout logout-url="/logout.do" />
-		<security:anonymous />
-	</security:http>
 	
 	<security:authentication-manager>
 		<security:authentication-provider>
@@ -112,7 +114,7 @@
 	</bean>
 	
 	<bean id="tokenStore"
-		class="org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore" />
+		class="org.springframework.security.oauth2.provider.token.InMemoryTokenStore" />
 		
 	<bean id="requestFactory"
 		class="org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory">
@@ -122,8 +124,8 @@
 	<oauth2:client-details-service id="clientDetailsService">
 		<oauth2:client client-id="tonr" scope="read, write" secret="secret"
 			authorities="ROLE_CLIENT" />
-		<oauth2:client client-id="tonr-implicit" scope="read, write" secret="secret"
-			authorities="ROLE_CLIENT" authorized-grant-types="implicit" autoapprove="true" />
+		<oauth2:client client-id="tonr-implicit" scope="read, write" secret="secret" access-token-validity="1800"
+			authorities="ROLE_CLIENT" authorized-grant-types="implicit" refresh-token-validity="3600" />
 	</oauth2:client-details-service>
 	
 	<oauth2:resource-server id="resourceServerFilter" resource-id="sparklr" />
